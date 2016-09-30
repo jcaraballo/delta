@@ -23,6 +23,9 @@ case class xml(lhsName: String, rhsName: String) {
 
     private def recurse(context: Context, leftRight: (Node, Node)): Stream[SingleNodePatch] = leftRight match {
       case (leftEE: Elem, rightE: Elem) if leftEE.label != rightE.label ⇒ context.diff(leftEE, rightE)
+      case (l: Text, r: Text) ⇒ if (l.data == r.data) Stream.Empty else context.diff(l, r)
+      case (l: Elem, r: Text) ⇒ context.diff(l, r)
+      case (l: Text, r: Elem) ⇒ context.diff(l, r)
 
       case (leftE: Elem, rightE: Elem) ⇒ {
         lazy val (leftA, rightA) = leftE.attributeMap disjoint rightE.attributeMap
@@ -134,6 +137,7 @@ case class xml(lhsName: String, rhsName: String) {
 
   private def childElems(elem: Elem): List[Node] = elem.child.toList.filter {
     case e: Elem ⇒ true
+    case t: Text ⇒ true
   }
 
   private def leftElem(children: Node*): Elem = elem(lhsName, children: _*)

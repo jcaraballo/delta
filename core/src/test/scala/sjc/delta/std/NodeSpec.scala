@@ -1,10 +1,10 @@
 package sjc.delta.std
 
-import org.scalatest.{Matchers, FreeSpec}
-import scala.xml.{Utility, Node}
+import org.scalatest.{FreeSpec, Matchers}
 
+import scala.xml.{Node, Text, Utility}
 import sjc.delta.Delta.DeltaOps
-import sjc.delta.std.xml.{nodeDelta, Changed, Missing, Extra, NodePatch, SingleNodePatch}
+import sjc.delta.std.xml.{Changed, Extra, Missing, NodePatch, SingleNodePatch, nodeDelta}
 
 
 class NodeSpec extends FreeSpec with Matchers {
@@ -115,6 +115,46 @@ class NodeSpec extends FreeSpec with Matchers {
       <parent><first><ghi/></first><second></second></parent>,
       Changed("/parent/first",  <abc/>, <ghi/>),
       Missing("/parent/second", <def/>)
+    )
+  }
+
+  "node with text" in {
+    test(
+      <parent>
+        <child/>
+      </parent>,
+      <parent>
+        <child/>
+      </parent>,
+      Nil: _*
+    )
+
+    test(
+      <parent>
+        <child>foo</child>
+      </parent>,
+      <parent>
+        <child>bar</child>
+      </parent>,
+      Changed("/parent/child", Text("foo"), Text("bar"))
+    )
+
+    test(
+      <parent>pre<child/></parent>,
+      <parent><child/></parent>,
+      Missing("/parent", Text("pre"))
+    )
+
+    test(
+      <parent><child/></parent>,
+      <parent><child/>post</parent>,
+      Extra("/parent", Text("post"))
+    )
+
+    test(
+      <parent><child/></parent>,
+      <parent>instead</parent>,
+      Changed("/parent", <child/>, Text("instead"))
     )
   }
 
